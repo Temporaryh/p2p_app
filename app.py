@@ -2,6 +2,7 @@ from datetime import datetime
 from curl_cffi import requests
 from flask import Flask, jsonify, send_from_directory
 from flask_cors import CORS
+import pytz
 
 app = Flask(__name__)
 CORS(app)  # Allows your browser to talk directly to Python
@@ -90,13 +91,19 @@ def intervallari_tehlil_et(trade_type="BUY"):
 
   return {"cemi_elan": len(elanlar), "intervallar": intervallar}
 
-@app.route('/')
+
+@app.route("/")
 def serve_homepage():
-  return send_from_directory('.', 'index.html')
+  return send_from_directory(".", "index.html")
+
+
 @app.route("/api/p2p-tehlil", methods=["GET"])
 def api_tehlil():
+  baku_tz = pytz.timezone("Asia/Baku")
+  baku_time = datetime.now(baku_tz).strftime("%Y-%m-%d %H:%M:%S (Bakı vaxtı)")
+
   return jsonify({
-      "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+      "timestamp": baku_time,
       "buy": intervallari_tehlil_et("BUY"),
       "sell": intervallari_tehlil_et("SELL"),
   })
