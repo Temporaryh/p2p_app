@@ -1,4 +1,5 @@
 from datetime import datetime
+from collections import defaultdict
 from curl_cffi import requests
 from flask import Flask, jsonify, send_from_directory
 from flask_cors import CORS
@@ -54,25 +55,35 @@ def binance_p2p_cek(trade_type="BUY", max_pages=20):
 
 def intervallari_tehlil_et(trade_type="BUY"):
   elanlar = binance_p2p_cek(trade_type, max_pages=20)
-  qiymet_siyahisi = (
-      ["1.68", "1.69", "1.70", "1.71", "1.72", "1.73", "1.74", "1.75"]
-      if trade_type == "BUY"
-      else [
-          "1.68",
-          "1.67",
-          "1.66",
-          "1.65",
-          "1.64",
-          "1.63",
-          "1.62",
-          "1.61",
-          "1.60",
-          "1.59",
-      ]
-  )
 
-  intervallar = {q: {"say": 0, "usdt": 0.0} for q in qiymet_siyahisi}
-  intervallar["Kənar"] = {"say": 0, "usdt": 0.0}
+  # Define base price range order
+  if trade_type == "BUY":
+    ana_qiymetler = [
+        "1.68",
+        "1.69",
+        "1.70",
+        "1.71",
+        "1.72",
+        "1.73",
+        "1.74",
+        "1.75",
+    ]
+  else:
+    ana_qiymetler = [
+        "1.68",
+        "1.67",
+        "1.66",
+        "1.65",
+        "1.64",
+        "1.63",
+        "1.62",
+        "1.61",
+        "1.60",
+        "1.59",
+    ]
+
+  # Temporary storage to aggregate all price levels dynamically
+  qiymet_bag = defaultdict(lambda: {"say": 0, "usdt": 0.0})
 
   for elan in elanlar:
     adv = elan.get("adv", {})
@@ -82,14 +93,44 @@ def intervallari_tehlil_et(trade_type="BUY"):
     )
     qiymet_str = f"{round(qiymet, 2):.2f}"
 
-    if qiymet_str in intervallar:
-      intervallar[qiymet_str]["say"] += 1
-      intervallar[qiymet_str]["usdt"] += usdt_miqdari
-    else:
-      intervallar["Kənar"]["say"] += 1
-      intervallar["Kənar"]["usdt"] += usdt_miqdari
+    qiymet_bag[qiymet_str]["say"] += 1
+    qiymet_bag[qiymet_str]["usdt"] += usdt_miqdari
 
-  return {"cemi_elan": len(elanlar), "intervallar": intervallar}
+  # Final response structure
+  son_intervallar = {}
+  diger_say = 0
+  diger_usdt = 0.0
+
+  # 1. Process main defined prices first (always keep them in order)
+  for q in ana_qiymetler:
+    son_intervallar[q] = qiymet_bag.pop(
+        q, {"say": 0, "usdt": 0.0}
+    )
+
+  # 2. Process all external prices dynamically
+  # Sort outer prices naturally depending on trade type
+  kardani_qiymetler = sorted(
+      qiymet_bag.keys(), reverse=(trade_type == "SELL")
+  )
+
+  for q in kardani_qiymetler:
+    data = qiymet_bag[q]
+    if data["usdt"] >= 5000:
+      # Individual row for external prices with >= 5,000 USDT
+      son_intervallar[q] = data
+    else:
+      # Group small liquidity into "Digər (< 5,000 USDT)"
+      diger_say += data["say"]
+      diger_usdt += data["usdt"]
+
+  # 3. Append small volume aggregator if any exists
+  if diger_say > 0:
+    son_intervallar["Digər (< 5,000 USDT)"] = {
+        "say": diger_say,
+        "usdt": diger_usdt,
+    }
+
+  return {"cemi_elan": len(elanlar), "intervallar": son_intervallar}
 
 
 @app.route("/")
