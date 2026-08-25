@@ -1,6 +1,6 @@
 from datetime import datetime
 from curl_cffi import requests
-from flask import Flask, jsonify
+from flask import Flask, jsonify, send_from_directory
 from flask_cors import CORS
 
 app = Flask(__name__)
@@ -90,7 +90,9 @@ def intervallari_tehlil_et(trade_type="BUY"):
 
   return {"cemi_elan": len(elanlar), "intervallar": intervallar}
 
-
+@app.route('/')
+def serve_homepage():
+  return send_from_directory('.', 'index.html')
 @app.route("/api/p2p-tehlil", methods=["GET"])
 def api_tehlil():
   return jsonify({
