@@ -125,7 +125,7 @@ def intervallari_tehlil_et(trade_type="BUY"):
 
   # 3. Append small volume aggregator if any exists
   if diger_say > 0:
-    son_intervallar["Digər (< 5,000 USDT)"] = {
+    son_intervallar["Digər"] = {
         "say": diger_say,
         "usdt": diger_usdt,
     }
