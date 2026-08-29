@@ -5,13 +5,14 @@
     <title>Binance P2P Canlı Təhlil</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 30px; background: #f4f6f8; }
-        .card { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); max-width: 850px; margin: auto; }
+        .card { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); max-width: 950px; margin: auto; }
         button { background: #f0b90b; color: #000; border: none; padding: 12px 20px; font-weight: bold; border-radius: 4px; cursor: pointer; font-size: 15px; }
         button:hover { background: #d9a608; }
         button:disabled { background: #ccc; cursor: not-allowed; }
         #loading { display: none; margin-top: 15px; color: #666; font-style: italic; }
         #timestamp { display: none; margin-top: 15px; padding: 10px; background: #eef2f5; border-radius: 4px; font-weight: bold; color: #2c3e50; font-size: 14px; }
-        .tables-container { display: flex; gap: 20px; margin-top: 20px; }
+        .section-title { margin-top: 25px; font-size: 18px; border-bottom: 2px solid #f0b90b; padding-bottom: 5px; color: #1e2329; }
+        .tables-container { display: flex; gap: 20px; margin-top: 15px; }
         table { width: 100%; border-collapse: collapse; background: #fff; }
         th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 14px; }
         th { background-color: #f8f9fa; }
@@ -20,25 +21,48 @@
 <body>
 
 <div class="card">
-    <h2>Binance P2P Canlı Təhlil Panel</h2>
+    <h2>Binance P2P Canlı Təhlil Paneli</h2>
     <button id="runBtn" onclick="məlumatlarıGətir()">Təhlili Başlat</button>
     <div id="loading">Binance-dən 20 səhifə skan edilir, xahiş olunur gözləyin...</div>
     <div id="timestamp"></div>
 
-    <div class="tables-container" id="sonucArea" style="display:none;">
-        <div style="flex: 1;">
-            <h3 id="buyBasliq">Kim neçəyə satır? (BUY)</h3>
-            <table>
-                <thead><tr><th>Məzənnə</th><th>Say</th><th>Ümumi Həcm</th></tr></thead>
-                <tbody id="buyTbody"></tbody>
-            </table>
+    <div id="sonucArea" style="display:none; flex-direction: column;">
+        <!-- TABLE 1: PRICE BRACKETS -->
+        <div class="section-title">📊 1. Məzənnə üzrə Təhlil</div>
+        <div class="tables-container">
+            <div style="flex: 1;">
+                <h3 id="buyBasliq">Kim neçəyə satır? (BUY)</h3>
+                <table>
+                    <thead><tr><th>Məzənnə</th><th>Say</th><th>Ümumi Həcm</th></tr></thead>
+                    <tbody id="buyTbody"></tbody>
+                </table>
+            </div>
+            <div style="flex: 1;">
+                <h3 id="sellBasliq">Kim neçəyə alır? (SELL)</h3>
+                <table>
+                    <thead><tr><th>Məzənnə</th><th>Say</th><th>Ümumi Həcm</th></tr></thead>
+                    <tbody id="sellTbody"></tbody>
+                </table>
+            </div>
         </div>
-        <div style="flex: 1;">
-            <h3 id="sellBasliq">Kim neçəyə alır? (SELL)</h3>
-            <table>
-                <thead><tr><th>Məzənnə</th><th>Say</th><th>Ümumi Həcm</th></tr></thead>
-                <tbody id="sellTbody"></tbody>
-            </table>
+
+        <!-- TABLE 2: MINIMUM LIMIT BRACKETS -->
+        <div class="section-title">⚖️ 2. Minimum Limit üzrə Təhlil (AZN)</div>
+        <div class="tables-container">
+            <div style="flex: 1;">
+                <h3 style="color: #27ae60;">USDT Satanlar (BUY)</h3>
+                <table>
+                    <thead><tr><th>Minimum Limit</th><th>Satıcı Sayı</th><th>Ümumi Kapital</th></tr></thead>
+                    <tbody id="limitBuyTbody"></tbody>
+                </table>
+            </div>
+            <div style="flex: 1;">
+                <h3 style="color: #c0392b;">USDT Alıcıları (SELL)</h3>
+                <table>
+                    <thead><tr><th>Minimum Limit</th><th>Alıcı Sayı</th><th>Ümumi Kapital</th></tr></thead>
+                    <tbody id="limitSellTbody"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
@@ -62,22 +86,25 @@ async function məlumatlarıGətir() {
         loading.style.display = 'none';
         btn.disabled = false;
 
-        // Displays Baku timezone output from Python backend
         if (data.timestamp) {
             timestamp.innerText = `Son yenilənmə vaxtı: ${data.timestamp}`;
             timestamp.style.display = 'block';
         }
 
+        // Table 1: Price Brackets
         cədvəlDoldur('buyTbody', data.buy.intervallar);
         cədvəlDoldur('sellTbody', data.sell.intervallar);
-
         document.getElementById('buyBasliq').innerText = `Kim neçəyə satır? [Elan: ${data.buy.cemi_elan}]`;
         document.getElementById('sellBasliq').innerText = `Kim neçəyə alır? [Elan: ${data.sell.cemi_elan}]`;
+
+        // Table 2: Min Limit Brackets
+        cədvəlDoldur('limitBuyTbody', data.limit_buy);
+        cədvəlDoldur('limitSellTbody', data.limit_sell);
 
         sonucArea.style.display = 'flex';
 
     } catch (error) {
-        alert('Xəta baş verdi: Python serverinin düyməsini basıb işlədiyindən əmin olun.');
+        alert('Xəta baş verdi: Python serverinin işlədiyindən əmin olun.');
         loading.style.display = 'none';
         btn.disabled = false;
     }
@@ -87,10 +114,10 @@ function cədvəlDoldur(tbodyId, items) {
     const tbody = document.getElementById(tbodyId);
     tbody.innerHTML = '';
     
-    for (const [mezenne, details] of Object.entries(items)) {
+    for (const [key, details] of Object.entries(items)) {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td><b>${mezenne}</b></td>
+            <td><b>${key}</b></td>
             <td>${details.say}</td>
             <td>${details.usdt.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} USDT</td>
         `;
@@ -100,4 +127,4 @@ function cədvəlDoldur(tbodyId, items) {
 </script>
 
 </body>
-</html>
+</html>s
