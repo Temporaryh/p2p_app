@@ -97,9 +97,10 @@ async function məlumatlarıGətir() {
         document.getElementById('buyBasliq').innerText = `Kim neçəyə satır? [Elan: ${data.buy.cemi_elan}]`;
         document.getElementById('sellBasliq').innerText = `Kim neçəyə alır? [Elan: ${data.sell.cemi_elan}]`;
 
-        // Table 2: Min Limit Brackets
-        cədvəlDoldur('limitBuyTbody', data.limit_buy);
-        cədvəlDoldur('limitSellTbody', data.limit_sell);
+        // Table 2: Min Limit Brackets in strict ascending order
+        const minLimitSira = ["< 50 AZN", "51 - 100 AZN", "101 - 200 AZN", "> 200 AZN"];
+        cədvəlSiraliDoldur('limitBuyTbody', data.limit_buy, minLimitSira);
+        cədvəlSiraliDoldur('limitSellTbody', data.limit_sell, minLimitSira);
 
         sonucArea.style.display = 'flex';
 
@@ -122,6 +123,24 @@ function cədvəlDoldur(tbodyId, items) {
             <td>${details.usdt.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} USDT</td>
         `;
         tbody.appendChild(tr);
+    }
+}
+
+function cədvəlSiraliDoldur(tbodyId, items, orderArray) {
+    const tbody = document.getElementById(tbodyId);
+    tbody.innerHTML = '';
+
+    for (const key of orderArray) {
+        if (items[key]) {
+            const details = items[key];
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><b>${key}</b></td>
+                <td>${details.say}</td>
+                <td>${details.usdt.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} USDT</td>
+            `;
+            tbody.appendChild(tr);
+        }
     }
 }
 </script>
