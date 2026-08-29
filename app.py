@@ -1,27 +1,3 @@
-Here is the updated implementation that adds a 2nd set of tables to analyze market liquidity broken down by Minimum Limit (AZN) for both USDT Sellers (BUY) and Buyers (SELL), exactly as your father requested.
-
-Key Changes Made
-New Analytics Function (min_limit_tehlil_et):
-Groups ads into 4 min-limit buckets:
-
-< 50 AZN
-
-51 – 100 AZN
-
-101 – 200 AZN
-
-> 200 AZN
-
-Calculates the Seller/Buyer count (say) and Total Capital (usdt) for each tier.
-
-Combined API Output (/api/p2p-tehlil):
-The response now delivers both Table 1 (Price Brackets) and Table 2 (Minimum Limit Buckets).
-
-Updated UI (index.html):
-Adds a secondary section for "Təhlil 2: Minimum Limitə Göyrə Bölgü" displaying side-by-side tables for BUY and SELL ads.
-
-1. Updated app.py
-Python
 from datetime import datetime
 from collections import defaultdict
 from curl_cffi import requests
@@ -78,7 +54,6 @@ def binance_p2p_cek(trade_type="BUY", max_pages=20):
 
 
 def intervallari_tehlil_et(elanlar, trade_type="BUY"):
-    """Table 1: Price bracket analysis"""
     if trade_type == "BUY":
         ana_qiymetler = [
             "1.68", "1.69", "1.70", "1.71", "1.72", "1.73", "1.74", "1.75"
@@ -130,7 +105,6 @@ def intervallari_tehlil_et(elanlar, trade_type="BUY"):
 
 
 def min_limit_tehlil_et(elanlar):
-    """Table 2: Minimum Limit analysis (AZN brackets)"""
     limit_buckets = {
         "< 50 AZN": {"say": 0, "usdt": 0.0},
         "51 - 100 AZN": {"say": 0, "usdt": 0.0},
