@@ -105,6 +105,7 @@ def intervallari_tehlil_et(elanlar, trade_type="BUY"):
 
 
 def min_limit_tehlil_et(elanlar):
+    # Strict order preserved using an ordered key structure
     limit_buckets = {
         "< 50 AZN": {"say": 0, "usdt": 0.0},
         "51 - 100 AZN": {"say": 0, "usdt": 0.0},
