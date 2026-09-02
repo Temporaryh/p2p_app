@@ -75,11 +75,9 @@ def intervallari_tehlil_et(elanlar, trade_type="BUY"):
         )
         qiymet_str = f"{round(qiymet, 2):.2f}"
 
-        # Completion rate check (> 98%)
         raw_finish_rate = advertiser.get("monthFinishRate", 0)
         try:
             finish_rate = float(raw_finish_rate)
-            # Binance returns decimal (0.9825) or percentage (98.25)
             if finish_rate <= 1.0:
                 finish_rate *= 100.0
         except (ValueError, TypeError):
