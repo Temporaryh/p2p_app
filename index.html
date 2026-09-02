@@ -5,7 +5,7 @@
     <title>Binance P2P Canlı Təhlil</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 30px; background: #f4f6f8; }
-        .card { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); max-width: 1000px; margin: auto; }
+        .card { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); max-width: 950px; margin: auto; }
         button { background: #f0b90b; color: #000; border: none; padding: 12px 20px; font-weight: bold; border-radius: 4px; cursor: pointer; font-size: 15px; }
         button:hover { background: #d9a608; }
         button:disabled { background: #ccc; cursor: not-allowed; }
@@ -37,7 +37,7 @@
                         <tr>
                             <th>Məzənnə</th>
                             <th>Say</th>
-                            <th>Tamamlama > 98%</th>
+                            <th>&gt;98%</th>
                             <th>Ümumi Həcm</th>
                         </tr>
                     </thead>
@@ -51,7 +51,7 @@
                         <tr>
                             <th>Məzənnə</th>
                             <th>Say</th>
-                            <th>Tamamlama > 98%</th>
+                            <th>&gt;98%</th>
                             <th>Ümumi Həcm</th>
                         </tr>
                     </thead>
@@ -105,13 +105,13 @@ async function məlumatlarıGətir() {
             timestamp.style.display = 'block';
         }
 
-        // Table 1: Price Brackets with High Completion Count (>98%)
+        // Table 1: Price Brackets
         cədvəlDoldur('buyTbody', data.buy.intervallar);
         cədvəlDoldur('sellTbody', data.sell.intervallar);
         document.getElementById('buyBasliq').innerText = `Kim neçəyə satır? [Elan: ${data.buy.cemi_elan}]`;
         document.getElementById('sellBasliq').innerText = `Kim neçəyə alır? [Elan: ${data.sell.cemi_elan}]`;
 
-        // Table 2: Min Limit Brackets in strict ascending order
+        // Table 2: Min Limit Brackets
         const minLimitSira = ["< 50 AZN", "51 - 100 AZN", "101 - 200 AZN", "> 200 AZN"];
         cədvəlSiraliDoldur('limitBuyTbody', data.limit_buy, minLimitSira);
         cədvəlSiraliDoldur('limitSellTbody', data.limit_sell, minLimitSira);
