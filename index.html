@@ -66,14 +66,28 @@
             <div style="flex: 1;">
                 <h3 style="color: #27ae60;">USDT Satanlar (BUY)</h3>
                 <table>
-                    <thead><tr><th>Minimum Limit</th><th>Satıcı Sayı</th><th>Ümumi Kapital</th></tr></thead>
+                    <thead>
+                        <tr>
+                            <th>Minimum Limit</th>
+                            <th>Satıcı Sayı</th>
+                            <th>&gt;98%</th>
+                            <th>Ümumi Kapital</th>
+                        </tr>
+                    </thead>
                     <tbody id="limitBuyTbody"></tbody>
                 </table>
             </div>
             <div style="flex: 1;">
                 <h3 style="color: #c0392b;">USDT Alıcıları (SELL)</h3>
                 <table>
-                    <thead><tr><th>Minimum Limit</th><th>Alıcı Sayı</th><th>Ümumi Kapital</th></tr></thead>
+                    <thead>
+                        <tr>
+                            <th>Minimum Limit</th>
+                            <th>Alıcı Sayı</th>
+                            <th>&gt;98%</th>
+                            <th>Ümumi Kapital</th>
+                        </tr>
+                    </thead>
                     <tbody id="limitSellTbody"></tbody>
                 </table>
             </div>
@@ -152,6 +166,7 @@ function cədvəlSiraliDoldur(tbodyId, items, orderArray) {
             tr.innerHTML = `
                 <td><b>${key}</b></td>
                 <td>${details.say}</td>
+                <td><b>${details.high_rate_say}</b></td>
                 <td>${details.usdt.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} USDT</td>
             `;
             tbody.appendChild(tr);
