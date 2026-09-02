@@ -63,25 +63,42 @@ def intervallari_tehlil_et(elanlar, trade_type="BUY"):
             "1.68", "1.67", "1.66", "1.65", "1.64", "1.63", "1.62", "1.61", "1.60", "1.59"
         ]
 
-    qiymet_bag = defaultdict(lambda: {"say": 0, "usdt": 0.0})
+    qiymet_bag = defaultdict(lambda: {"say": 0, "usdt": 0.0, "high_rate_say": 0})
 
     for elan in elanlar:
         adv = elan.get("adv", {})
+        advertiser = elan.get("advertiser", {})
+        
         qiymet = float(adv.get("price", 0))
         usdt_miqdari = float(
             adv.get("surplusAmount", adv.get("tradableQuantity", 0))
         )
         qiymet_str = f"{round(qiymet, 2):.2f}"
 
+        # Completion rate check (> 98%)
+        raw_finish_rate = advertiser.get("monthFinishRate", 0)
+        try:
+            finish_rate = float(raw_finish_rate)
+            # Binance returns decimal (0.9825) or percentage (98.25)
+            if finish_rate <= 1.0:
+                finish_rate *= 100.0
+        except (ValueError, TypeError):
+            finish_rate = 0.0
+
+        is_high_rate = finish_rate > 98.0
+
         qiymet_bag[qiymet_str]["say"] += 1
         qiymet_bag[qiymet_str]["usdt"] += usdt_miqdari
+        if is_high_rate:
+            qiymet_bag[qiymet_str]["high_rate_say"] += 1
 
     son_intervallar = {}
     diger_say = 0
     diger_usdt = 0.0
+    diger_high_rate = 0
 
     for q in ana_qiymetler:
-        son_intervallar[q] = qiymet_bag.pop(q, {"say": 0, "usdt": 0.0})
+        son_intervallar[q] = qiymet_bag.pop(q, {"say": 0, "usdt": 0.0, "high_rate_say": 0})
 
     kardani_qiymetler = sorted(
         qiymet_bag.keys(), reverse=(trade_type == "SELL")
@@ -94,18 +111,19 @@ def intervallari_tehlil_et(elanlar, trade_type="BUY"):
         else:
             diger_say += data["say"]
             diger_usdt += data["usdt"]
+            diger_high_rate += data["high_rate_say"]
 
     if diger_say > 0:
         son_intervallar["Digər"] = {
             "say": diger_say,
             "usdt": diger_usdt,
+            "high_rate_say": diger_high_rate
         }
 
     return {"cemi_elan": len(elanlar), "intervallar": son_intervallar}
 
 
 def min_limit_tehlil_et(elanlar):
-    # Strict order preserved using an ordered key structure
     limit_buckets = {
         "< 50 AZN": {"say": 0, "usdt": 0.0},
         "51 - 100 AZN": {"say": 0, "usdt": 0.0},
