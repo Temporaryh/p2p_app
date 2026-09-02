@@ -5,7 +5,7 @@
     <title>Binance P2P Canlı Təhlil</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 30px; background: #f4f6f8; }
-        .card { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); max-width: 950px; margin: auto; }
+        .card { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); max-width: 1000px; margin: auto; }
         button { background: #f0b90b; color: #000; border: none; padding: 12px 20px; font-weight: bold; border-radius: 4px; cursor: pointer; font-size: 15px; }
         button:hover { background: #d9a608; }
         button:disabled { background: #ccc; cursor: not-allowed; }
@@ -14,7 +14,7 @@
         .section-title { margin-top: 25px; font-size: 18px; border-bottom: 2px solid #f0b90b; padding-bottom: 5px; color: #1e2329; }
         .tables-container { display: flex; gap: 20px; margin-top: 15px; }
         table { width: 100%; border-collapse: collapse; background: #fff; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 14px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 13px; }
         th { background-color: #f8f9fa; }
     </style>
 </head>
@@ -33,14 +33,28 @@
             <div style="flex: 1;">
                 <h3 id="buyBasliq">Kim neçəyə satır? (BUY)</h3>
                 <table>
-                    <thead><tr><th>Məzənnə</th><th>Say</th><th>Ümumi Həcm</th></tr></thead>
+                    <thead>
+                        <tr>
+                            <th>Məzənnə</th>
+                            <th>Say</th>
+                            <th>Tamamlama > 98%</th>
+                            <th>Ümumi Həcm</th>
+                        </tr>
+                    </thead>
                     <tbody id="buyTbody"></tbody>
                 </table>
             </div>
             <div style="flex: 1;">
                 <h3 id="sellBasliq">Kim neçəyə alır? (SELL)</h3>
                 <table>
-                    <thead><tr><th>Məzənnə</th><th>Say</th><th>Ümumi Həcm</th></tr></thead>
+                    <thead>
+                        <tr>
+                            <th>Məzənnə</th>
+                            <th>Say</th>
+                            <th>Tamamlama > 98%</th>
+                            <th>Ümumi Həcm</th>
+                        </tr>
+                    </thead>
                     <tbody id="sellTbody"></tbody>
                 </table>
             </div>
@@ -91,7 +105,7 @@ async function məlumatlarıGətir() {
             timestamp.style.display = 'block';
         }
 
-        // Table 1: Price Brackets
+        // Table 1: Price Brackets with High Completion Count (>98%)
         cədvəlDoldur('buyTbody', data.buy.intervallar);
         cədvəlDoldur('sellTbody', data.sell.intervallar);
         document.getElementById('buyBasliq').innerText = `Kim neçəyə satır? [Elan: ${data.buy.cemi_elan}]`;
@@ -120,6 +134,7 @@ function cədvəlDoldur(tbodyId, items) {
         tr.innerHTML = `
             <td><b>${key}</b></td>
             <td>${details.say}</td>
+            <td><b>${details.high_rate_say}</b></td>
             <td>${details.usdt.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} USDT</td>
         `;
         tbody.appendChild(tr);
