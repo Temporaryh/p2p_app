@@ -123,18 +123,30 @@ def intervallari_tehlil_et(elanlar, trade_type="BUY"):
 
 def min_limit_tehlil_et(elanlar):
     limit_buckets = {
-        "< 50 AZN": {"say": 0, "usdt": 0.0},
-        "51 - 100 AZN": {"say": 0, "usdt": 0.0},
-        "101 - 200 AZN": {"say": 0, "usdt": 0.0},
-        "> 200 AZN": {"say": 0, "usdt": 0.0},
+        "< 50 AZN": {"say": 0, "usdt": 0.0, "high_rate_say": 0},
+        "51 - 100 AZN": {"say": 0, "usdt": 0.0, "high_rate_say": 0},
+        "101 - 200 AZN": {"say": 0, "usdt": 0.0, "high_rate_say": 0},
+        "> 200 AZN": {"say": 0, "usdt": 0.0, "high_rate_say": 0},
     }
 
     for elan in elanlar:
         adv = elan.get("adv", {})
+        advertiser = elan.get("advertiser", {})
+
         min_limit = float(adv.get("minSingleTransAmount", 0))
         usdt_miqdari = float(
             adv.get("surplusAmount", adv.get("tradableQuantity", 0))
         )
+
+        raw_finish_rate = advertiser.get("monthFinishRate", 0)
+        try:
+            finish_rate = float(raw_finish_rate)
+            if finish_rate <= 1.0:
+                finish_rate *= 100.0
+        except (ValueError, TypeError):
+            finish_rate = 0.0
+
+        is_high_rate = finish_rate > 98.0
 
         if min_limit <= 50:
             key = "< 50 AZN"
@@ -147,6 +159,8 @@ def min_limit_tehlil_et(elanlar):
 
         limit_buckets[key]["say"] += 1
         limit_buckets[key]["usdt"] += usdt_miqdari
+        if is_high_rate:
+            limit_buckets[key]["high_rate_say"] += 1
 
     return limit_buckets
 
