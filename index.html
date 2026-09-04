@@ -16,6 +16,15 @@
         table { width: 100%; border-collapse: collapse; background: #fff; }
         th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 13px; }
         th { background-color: #f8f9fa; }
+
+        .expandable-row { cursor: pointer; transition: background-color 0.15s; }
+        .expandable-row:hover { background-color: #f0f4f8; }
+        .toggle-icon { display: inline-block; width: 12px; margin-right: 6px; font-size: 10px; color: #777; }
+        .subtable-container { display: none; background-color: #fcfcfc; }
+        .subtable-container.open { display: table-row; }
+        .subtable { margin: 5px 0 5px 20px; width: calc(100% - 20px); border: 1px solid #e2e8f0; }
+        .subtable th { background-color: #edf2f7; font-size: 11px; }
+        .subtable td { font-size: 11px; padding: 6px; }
     </style>
 </head>
 <body>
@@ -28,7 +37,7 @@
 
     <div id="sonucArea" style="display:none; flex-direction: column;">
         <!-- TABLE 1: PRICE BRACKETS -->
-        <div class="section-title">📊 1. Məzənnə üzrə Təhlil</div>
+        <div class="section-title">📊 1. Məzənnə üzrə Təhlil (Təfərrüat üçün sətirə klikləyin)</div>
         <div class="tables-container">
             <div style="flex: 1;">
                 <h3 id="buyBasliq">Kim neçəyə satır? (BUY)</h3>
@@ -119,9 +128,9 @@ async function məlumatlarıGətir() {
             timestamp.style.display = 'block';
         }
 
-        // Table 1: Price Brackets
-        cədvəlDoldur('buyTbody', data.buy.intervallar);
-        cədvəlDoldur('sellTbody', data.sell.intervallar);
+        // Table 1: Price Brackets (With expandable limit breakdown)
+        cədvəlExpandableDoldur('buyTbody', data.buy.intervallar, 'buy');
+        cədvəlExpandableDoldur('sellTbody', data.sell.intervallar, 'sell');
         document.getElementById('buyBasliq').innerText = `Kim neçəyə satır? [Elan: ${data.buy.cemi_elan}]`;
         document.getElementById('sellBasliq').innerText = `Kim neçəyə alır? [Elan: ${data.sell.cemi_elan}]`;
 
@@ -139,19 +148,79 @@ async function məlumatlarıGətir() {
     }
 }
 
-function cədvəlDoldur(tbodyId, items) {
+function cədvəlExpandableDoldur(tbodyId, items, prefix) {
     const tbody = document.getElementById(tbodyId);
     tbody.innerHTML = '';
-    
+    const minLimitSira = ["< 50 AZN", "51 - 100 AZN", "101 - 200 AZN", "> 200 AZN"];
+
+    let index = 0;
     for (const [key, details] of Object.entries(items)) {
+        index++;
+        const subRowId = `${prefix}-sub-${index}`;
+
+        // Parent Row
         const tr = document.createElement('tr');
+        tr.className = 'expandable-row';
+        tr.onclick = () => toggleSubRow(subRowId, tr);
         tr.innerHTML = `
-            <td><b>${key}</b></td>
+            <td><span class="toggle-icon" id="${subRowId}-icon">▶</span><b>${key}</b></td>
             <td>${details.say}</td>
             <td><b>${details.high_rate_say}</b></td>
             <td>${details.usdt.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} USDT</td>
         `;
         tbody.appendChild(tr);
+
+        // Sub Row
+        const subTr = document.createElement('tr');
+        subTr.id = subRowId;
+        subTr.className = 'subtable-container';
+
+        let subRowsHtml = '';
+        if (details.limits) {
+            for (const limitKey of minLimitSira) {
+                const limData = details.limits[limitKey] || { say: 0, high_rate_say: 0, usdt: 0 };
+                subRowsHtml += `
+                    <tr>
+                        <td><b>${limitKey}</b></td>
+                        <td>${limData.say}</td>
+                        <td><b>${limData.high_rate_say}</b></td>
+                        <td>${limData.usdt.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} USDT</td>
+                    </tr>
+                `;
+            }
+        }
+
+        subTr.innerHTML = `
+            <td colspan="4" style="padding: 0 10px 10px 10px;">
+                <table class="subtable">
+                    <thead>
+                        <tr>
+                            <th>Min Limit</th>
+                            <th>Say</th>
+                            <th>&gt;98%</th>
+                            <th>Həcm</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${subRowsHtml}
+                    </tbody>
+                </table>
+            </td>
+        `;
+        tbody.appendChild(subTr);
+    }
+}
+
+function toggleSubRow(subRowId, parentTr) {
+    const subTr = document.getElementById(subRowId);
+    const icon = document.getElementById(`${subRowId}-icon`);
+    
+    if (subTr.classList.contains('open')) {
+        subTr.classList.remove('open');
+        icon.innerText = '▶';
+    } else {
+        subTr.classList.add('open');
+        icon.innerText = '▼';
     }
 }
 
