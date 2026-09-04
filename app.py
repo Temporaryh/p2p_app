@@ -53,6 +53,26 @@ def binance_p2p_cek(trade_type="BUY", max_pages=20):
     return butun_elanlar
 
 
+def empty_limit_buckets():
+    return {
+        "< 50 AZN": {"say": 0, "usdt": 0.0, "high_rate_say": 0},
+        "51 - 100 AZN": {"say": 0, "usdt": 0.0, "high_rate_say": 0},
+        "101 - 200 AZN": {"say": 0, "usdt": 0.0, "high_rate_say": 0},
+        "> 200 AZN": {"say": 0, "usdt": 0.0, "high_rate_say": 0},
+    }
+
+
+def min_limit_key_teyin_et(min_limit):
+    if min_limit <= 50:
+        return "< 50 AZN"
+    elif 51 <= min_limit <= 100:
+        return "51 - 100 AZN"
+    elif 101 <= min_limit <= 200:
+        return "101 - 200 AZN"
+    else:
+        return "> 200 AZN"
+
+
 def intervallari_tehlil_et(elanlar, trade_type="BUY"):
     if trade_type == "BUY":
         ana_qiymetler = [
@@ -63,7 +83,12 @@ def intervallari_tehlil_et(elanlar, trade_type="BUY"):
             "1.68", "1.67", "1.66", "1.65", "1.64", "1.63", "1.62", "1.61", "1.60", "1.59"
         ]
 
-    qiymet_bag = defaultdict(lambda: {"say": 0, "usdt": 0.0, "high_rate_say": 0})
+    qiymet_bag = defaultdict(lambda: {
+        "say": 0,
+        "usdt": 0.0,
+        "high_rate_say": 0,
+        "limits": empty_limit_buckets()
+    })
 
     for elan in elanlar:
         adv = elan.get("adv", {})
@@ -73,6 +98,9 @@ def intervallari_tehlil_et(elanlar, trade_type="BUY"):
         usdt_miqdari = float(
             adv.get("surplusAmount", adv.get("tradableQuantity", 0))
         )
+        min_limit = float(adv.get("minSingleTransAmount", 0))
+        limit_key = min_limit_key_teyin_et(min_limit)
+
         qiymet_str = f"{round(qiymet, 2):.2f}"
 
         raw_finish_rate = advertiser.get("monthFinishRate", 0)
@@ -90,13 +118,24 @@ def intervallari_tehlil_et(elanlar, trade_type="BUY"):
         if is_high_rate:
             qiymet_bag[qiymet_str]["high_rate_say"] += 1
 
+        qiymet_bag[qiymet_str]["limits"][limit_key]["say"] += 1
+        qiymet_bag[qiymet_str]["limits"][limit_key]["usdt"] += usdt_miqdari
+        if is_high_rate:
+            qiymet_bag[qiymet_str]["limits"][limit_key]["high_rate_say"] += 1
+
     son_intervallar = {}
     diger_say = 0
     diger_usdt = 0.0
     diger_high_rate = 0
+    diger_limits = empty_limit_buckets()
 
     for q in ana_qiymetler:
-        son_intervallar[q] = qiymet_bag.pop(q, {"say": 0, "usdt": 0.0, "high_rate_say": 0})
+        son_intervallar[q] = qiymet_bag.pop(q, {
+            "say": 0,
+            "usdt": 0.0,
+            "high_rate_say": 0,
+            "limits": empty_limit_buckets()
+        })
 
     kardani_qiymetler = sorted(
         qiymet_bag.keys(), reverse=(trade_type == "SELL")
@@ -110,24 +149,24 @@ def intervallari_tehlil_et(elanlar, trade_type="BUY"):
             diger_say += data["say"]
             diger_usdt += data["usdt"]
             diger_high_rate += data["high_rate_say"]
+            for lk, ldata in data["limits"].items():
+                diger_limits[lk]["say"] += ldata["say"]
+                diger_limits[lk]["usdt"] += ldata["usdt"]
+                diger_limits[lk]["high_rate_say"] += ldata["high_rate_say"]
 
     if diger_say > 0:
         son_intervallar["Digər"] = {
             "say": diger_say,
             "usdt": diger_usdt,
-            "high_rate_say": diger_high_rate
+            "high_rate_say": diger_high_rate,
+            "limits": diger_limits
         }
 
     return {"cemi_elan": len(elanlar), "intervallar": son_intervallar}
 
 
 def min_limit_tehlil_et(elanlar):
-    limit_buckets = {
-        "< 50 AZN": {"say": 0, "usdt": 0.0, "high_rate_say": 0},
-        "51 - 100 AZN": {"say": 0, "usdt": 0.0, "high_rate_say": 0},
-        "101 - 200 AZN": {"say": 0, "usdt": 0.0, "high_rate_say": 0},
-        "> 200 AZN": {"say": 0, "usdt": 0.0, "high_rate_say": 0},
-    }
+    limit_buckets = empty_limit_buckets()
 
     for elan in elanlar:
         adv = elan.get("adv", {})
@@ -147,15 +186,7 @@ def min_limit_tehlil_et(elanlar):
             finish_rate = 0.0
 
         is_high_rate = finish_rate > 98.0
-
-        if min_limit <= 50:
-            key = "< 50 AZN"
-        elif 51 <= min_limit <= 100:
-            key = "51 - 100 AZN"
-        elif 101 <= min_limit <= 200:
-            key = "101 - 200 AZN"
-        else:
-            key = "> 200 AZN"
+        key = min_limit_key_teyin_et(min_limit)
 
         limit_buckets[key]["say"] += 1
         limit_buckets[key]["usdt"] += usdt_miqdari
